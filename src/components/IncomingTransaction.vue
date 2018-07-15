@@ -8,8 +8,8 @@
     <div class="incoming-transaction__button" v-for="(item,index) in getItems()"  :key="index">
       <button @click="addMoneyToItem(item.name,incomingTransaction)" type=button>Add to {{ item.name }}</button>
     </div>
-    <input v-model="customItem" placeholder="Другой вариант">
-      <button @click="addMoneyToItem(customItem,incomingTransaction)" type=button>Другой вариант</button>
+    <textarea v-model="customItem" placeholder="Другой вариант"></textarea>
+    <button @click="addMoneyToItem(customItem,incomingTransaction)" type=button>Другой вариант</button>
 
   </div>
 </template>
@@ -20,7 +20,7 @@ export default {
   props: ['incomingTransaction', 'addMoneyToItem', 'getItems'],
   data: function () {
       return {
-          customItem:""
+          customItem: this.incomingTransaction.body 
       }
   }
 }
@@ -35,13 +35,14 @@ border: 1px solid grey;
 margin-bottom: 1rem;
  
 }
-.incoming-transaction input {
-    height: 2rem;
+.incoming-transaction textarea {
+    height: 3.3rem;
     width: 100%;
     font-size: 1.1rem;
     margin-top: 1rem;
     margin-bottom: 0.3rem;
     padding: 0.3rem;
+    resize: vertical;
 }
 .incoming-transaction  button {
      height: 2rem;

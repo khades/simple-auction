@@ -74,21 +74,3 @@ export default class DonationEvents {
     }
   }
 }
-
-// const de = new DonationEvents();
-
-// de.addDonationListener(function(service, id, amount, name, text) {
-//     console.log(`Донат с ${service} на сумму ${amount} от ${name} с текстом: ${text} (ID: ${id})`);
-// });
-
-// de.connect({
-//     streamlabs: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbiI6Ijk4M0IwNThGRkMwNDI2QzNDQ0UxIiwicmVhZF9vbmx5Ijp0cnVlLCJwcmV2ZW50X21hc3RlciI6dHJ1ZSwidHdpdGNoX2lkIjoiOTczNzM1NjIifQ.nydl2_ROgbL2AavDK_S01OidxcYYtjxV_wEPB154B6Y',
-//     donationalerts: 'VovRsIzBU2fMTGBaBm0D'
-// });
-
-// setTimeout(function () {
-//     de.connect({
-//         streamlabs: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbiI6Ijk4M0IwNThGRkMwNDI2QzNDQ0UxIiwicmVhZF9vbmx5Ijp0cnVlLCJwcmV2ZW50X21hc3RlciI6dHJ1ZSwidHdpdGNoX2lkIjoiOTczNzM1NjIifQ.nydl2_ROgbL2AavDK_S01OidxcYYtjxV_wEPB154B6Y',
-//         donationalerts: 'VovRsIzBU2fMTGBaBm0D'
-//     });
-// }, 10000);

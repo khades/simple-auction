@@ -27,7 +27,7 @@
         </div>
       </div>
       <div class="incoming-transactions">
-        <div v-for="(incomingTransaction) in getincomingTransaсtions()"  :key="incomingTransaction.transactionID">
+        <div v-for="(incomingTransaction) in getincomingTransaсtions()"  :key="incomingTransaction.id">
           <IncomingTransaction :incomingTransaction=incomingTransaction :addMoneyToItem=addMoneyToItem :getItems=getItems />
         </div>
       </div>
@@ -57,7 +57,7 @@ var data = function() {
       this.items = itemT.sort((lItem, rItem) => rItem.amount - lItem.amount);
   }
   this.eventListener.addDonationListener(function(service, id, amount, name, text) {
-    this.incomingTransaсtions.push({user:name, body: text, amount: amount, date: new Date().getTime()})
+    this.incomingTransaсtions.push({id: service+" "+id, user:name, body: text, amount: amount, date: new Date().getTime()})
     this.incomingTransaсtions.sort((lItem, rItem) => rItem - lItem)
     localStorage.setItem(
         "incomingTransaсtions",
