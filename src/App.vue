@@ -8,7 +8,7 @@
       </div>
     </div>
     <div class="auction-app__body">
-      <Settings :getStreamlabsKey=getStreamlabsKey :getDonationalertskey=getDonationalertskey :setStreamlabsKey=setStreamlabsKey :setDonationalertsKey=setDonationalertsKey />
+      <Settings :getStreamlabsKey=getStreamlabsKey :getDonationalertsKey=getDonationalertsKey :setStreamlabsKey=setStreamlabsKey :setDonationalertsKey=setDonationalertsKey />
     </div>
   </div>
   
@@ -27,7 +27,7 @@
         </div>
       </div>
       <div class="incoming-transactions">
-        <div v-for="(incomingTransaction) in getIncomingTransations()"  :key="incomingTransaction.transactionID">
+        <div v-for="(incomingTransaction) in getincomingTransaсtions()"  :key="incomingTransaction.transactionID">
           <IncomingTransaction :incomingTransaction=incomingTransaction :addMoneyToItem=addMoneyToItem :getItems=getItems />
         </div>
       </div>
@@ -38,32 +38,31 @@
 <script>
 import AuctionItem from "./components/AuctionItem";
 import IncomingTransaction from "./components/IncomingTransaction";
+import Settings from "./components/Settings";
+import DonationEvents from "./DonationEvents";
 
 var data = function() {
-  this.streamlabsKey = localStorage.getItem('streamlabsKey"');
+  this.streamlabsKey = localStorage.getItem('streamlabsKey');
   this.donationalertsKey = localStorage.getItem("donationalertsKey");
   this.settings = false;
-  this.items = [
-    { name: "Chowderchu", amount: 100 },
-    { name: "Demon souls", amount: 1000 },
-    { name: "Counter strike", amount: 10 }
-  ].sort((lItem, rItem) => rItem.amount - lItem.amount);
-  this.incomingTransations = [
-    {
-      transactionID: "1",
-      user: "khades",
-      body: "Тест тест тест",
-      amount: 300,
-      date: new Date()
-    },
-    {
-      transactionID: "2",
-      user: "khades",
-      body: "Тест тест тест",
-      amount: 300,
-      date: new Date()
-    }
-  ];
+  this.eventListener = new DonationEvents();
+  this.incomingTransaсtions = []
+  var incT = JSON.parse(localStorage.getItem("incomingTransaсtions"))
+  if (Array.isArray(incT)) {
+    this.incomingTransaсtions = incT.sort((lItem, rItem) => rItem - lItem);
+  }
+
+  this.eventListener.addDonationListener(function(service, id, amount, name, text) {
+    this.incomingTransaсtions.push({user:name, body: text, amount: amount, date: new Date().getTime()})
+    this.incomingTransaсtions.sort((lItem, rItem) => rItem - lItem)
+    localStorage.setItem(
+        "incomingTransaсtions",
+        JSON.stringify(this.incomingTransaсtions)
+    );
+  }.bind(this));
+  this.items = JSON.parse(localStorage.getItem("items")).sort((lItem, rItem) => rItem.amount - lItem.amount);
+      this.eventListener.connect({donationalerts: this.donationalertsKey, streamlabs: this.streamlabsKey});
+
   this.topAmount = 0;
   if (this.items.length > 0) this.topAmount = this.items[0].amount;
   return {
@@ -78,7 +77,7 @@ var data = function() {
     items: this.items,
     streamlabsKey: this.streamlabsKey,
     donationalertsKey: this.donationalertsKey,
-    incomingTransations: this.incomingTransations,
+    incomingTransaсtions: this.incomingTransaсtions,
     getTopAmount: () => {
       return this.topAmount;
     },
@@ -98,31 +97,31 @@ var data = function() {
       this.items.sort((lItem, rItem) => rItem.amount - lItem.amount);
       if (this.items.length > 0) this.topAmount = this.items[0].amount;
       localStorage.setItem("items", JSON.stringify(this.items));
-      this.incomingTransations = this.incomingTransations.filter(
+      this.incomingTransaсtions = this.incomingTransaсtions.filter(
         item => item !== incomingTransaction
       );
       localStorage.setItem(
-        "incomingTransations",
-        JSON.stringify(this.incomingTransations)
+        "incomingTransaсtions",
+        JSON.stringify(this.incomingTransaсtions)
       );
     },
-    getIncomingTransations: () => {
-      return this.incomingTransations;
+    getincomingTransaсtions: () => {
+      return this.incomingTransaсtions;
     },
     fullReset: () => {
       this.items = [];
-      this.incomingTransations = [];
+      this.incomingTransaсtions = [];
       localStorage.setItem("items", JSON.stringify(this.items));
       localStorage.setItem(
-        "incomingTransations",
-        JSON.stringify(this.incomingTransations)
+        "incomingTransaсtions",
+        JSON.stringify(this.incomingTransaсtions)
       );
     },
     addIncomingTransatiions: item => {
-      this.incomingTransations.push(item);
+      this.incomingTransaсtions.push(item);
       localStorage.setItem(
-        "incomingTransations",
-        JSON.stringify(this.incomingTransations)
+        "incomingTransaсtions",
+        JSON.stringify(this.incomingTransaсtions)
       );
     },
     getStreamlabsKey: () => {
@@ -131,6 +130,7 @@ var data = function() {
     setStreamlabsKey: streamlabsKey => {
       this.setStreamlabsKey = streamlabsKey;
       localStorage.setItem("streamlabsKey", streamlabsKey);
+      this.eventListener.connect({streamlabs: streamlabsKey});
     },
     getDonationalertsKey: () => {
       return this.donationalertsKey;
@@ -138,6 +138,8 @@ var data = function() {
     setDonationalertsKey: donationalertsKey => {
       this.donationalertsKey = donationalertsKey;
       localStorage.setItem("donationalertsKey", donationalertsKey);
+      this.eventListener.connect({donationalerts: donationalertsKey});
+
     }
   };
 };
@@ -147,7 +149,7 @@ var data = function() {
 export default {
   data: data,
   name: "App",
-  components: { AuctionItem, IncomingTransaction }
+  components: { AuctionItem, IncomingTransaction, Settings }
 };
 </script>
 

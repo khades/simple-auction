@@ -17,7 +17,12 @@
 <script>
 export default {
   name: 'IncomingTransaction',
-  props: ['incomingTransaction', 'addMoneyToItem', 'getItems']
+  props: ['incomingTransaction', 'addMoneyToItem', 'getItems'],
+  data: function () {
+      return {
+          customItem:""
+      }
+  }
 }
 </script>
 <style scoped>
