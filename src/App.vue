@@ -51,7 +51,11 @@ var data = function() {
   if (Array.isArray(incT)) {
     this.incomingTransaсtions = incT.sort((lItem, rItem) => rItem - lItem);
   }
-
+  this.items = []
+  var itemT = JSON.parse(localStorage.getItem("items"))
+  if (Array.isArray(itemT)) {
+      this.items = itemT.sort((lItem, rItem) => rItem.amount - lItem.amount);
+  }
   this.eventListener.addDonationListener(function(service, id, amount, name, text) {
     this.incomingTransaсtions.push({user:name, body: text, amount: amount, date: new Date().getTime()})
     this.incomingTransaсtions.sort((lItem, rItem) => rItem - lItem)
@@ -60,7 +64,7 @@ var data = function() {
         JSON.stringify(this.incomingTransaсtions)
     );
   }.bind(this));
-  this.items = JSON.parse(localStorage.getItem("items")).sort((lItem, rItem) => rItem.amount - lItem.amount);
+
       this.eventListener.connect({donationalerts: this.donationalertsKey, streamlabs: this.streamlabsKey});
 
   this.topAmount = 0;
