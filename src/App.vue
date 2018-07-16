@@ -1,10 +1,21 @@
 <template>
-  <div v-if="settings" id="app" class="auction-app">
-    <div class="auction-app__header">
-
+<div>
+    <div v-if="page === 'timerSettings'" id="app" class="auction-app">
+         <div class="auction-app__header">
       <div class="auction-app__header-text">Аукцион</div>
       <div class="auction-app__buttons">
-        <button type=button @click=setSettings(false)>Назад</button>
+        <button type=button @click=goToApp>Назад</button>
+      </div>
+    </div>
+    <div class="auction-app__body">
+      <TimerSettings :getAuctionDuration=getAuctionDuration :getAuctionTimeout=getAuctionTimeout :getAuctionTimeoutExtension=getAuctionTimeoutExtension :saveTimerSettings=saveTimerSettings />
+    </div>
+  </div>
+  <div v-if="page === 'settings'" id="app" class="auction-app">
+    <div class="auction-app__header">
+      <div class="auction-app__header-text">Аукцион</div>
+      <div class="auction-app__buttons">
+        <button type=button @click=goToApp>Назад</button>
       </div>
     </div>
     <div class="auction-app__body">
@@ -12,11 +23,12 @@
     </div>
   </div>
   
-  <div v-else id="app" class="auction-app">
+  <div v-if="page === 'app'"  id="app" class="auction-app">
     <div class="auction-app__header">
       <div class="auction-app__header-text">Аукцион</div>
       <div class="auction-app__buttons">
-        <button type=button @click=setSettings(true)>Настроить</button>
+        <button type=button @click=goToTimerSettings>Настроить таймер</button>
+        <button type=button @click=goToSettings>Настроить системы донатов</button>
         <button type=button @click=fullReset>Сбросить</button>
       </div>
     </div>
@@ -33,55 +45,107 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script>
 import AuctionItem from "./components/AuctionItem";
 import IncomingTransaction from "./components/IncomingTransaction";
 import Settings from "./components/Settings";
+import TimerSettings from "./components/TimerSettings";
+
 import DonationEvents from "./DonationEvents";
 
 var data = function() {
-  this.streamlabsKey = localStorage.getItem('streamlabsKey');
+  this.auctionDuration =
+    parseInt(localStorage.getItem("auctionDuration")) || 1200;
+  this.auctionTimeout =
+    parseInt(localStorage.getItem("auctionDurationTimeout")) || 120;
+  this.auctionTimeoutExtension =
+    parseInt(localStorage.getItem("auctionDurationTimeoutExtension")) || 120;
+
+  this.streamlabsKey = localStorage.getItem("streamlabsKey");
   this.donationalertsKey = localStorage.getItem("donationalertsKey");
-  this.settings = false;
+  this.page = "app";
   this.eventListener = new DonationEvents();
-  this.incomingTransaсtions = []
-  var incT = JSON.parse(localStorage.getItem("incomingTransaсtions"))
+  this.incomingTransaсtions = [];
+  var incT = JSON.parse(localStorage.getItem("incomingTransaсtions"));
   if (Array.isArray(incT)) {
     this.incomingTransaсtions = incT.sort((lItem, rItem) => rItem - lItem);
   }
-  this.items = []
-  var itemT = JSON.parse(localStorage.getItem("items"))
+  this.items = [];
+  var itemT = JSON.parse(localStorage.getItem("items"));
   if (Array.isArray(itemT)) {
-      this.items = itemT.sort((lItem, rItem) => rItem.amount - lItem.amount);
+    this.items = itemT.sort((lItem, rItem) => rItem.amount - lItem.amount);
   }
-  this.eventListener.addDonationListener(function(service, id, amount, name, text) {
-    this.incomingTransaсtions.push({id: service+" "+id, user:name, body: text, amount: amount, date: new Date().getTime()})
-    this.incomingTransaсtions.sort((lItem, rItem) => rItem - lItem)
-    localStorage.setItem(
+  this.eventListener.addDonationListener(
+    function(service, id, amount, name, text) {
+      this.incomingTransaсtions.push({
+        id: service + " " + id,
+        user: name,
+        body: text,
+        amount: amount,
+        date: new Date().getTime()
+      });
+      this.incomingTransaсtions.sort((lItem, rItem) => rItem - lItem);
+      localStorage.setItem(
         "incomingTransaсtions",
         JSON.stringify(this.incomingTransaсtions)
-    );
-  }.bind(this));
+      );
+    }.bind(this)
+  );
 
-      this.eventListener.connect({donationalerts: this.donationalertsKey, streamlabs: this.streamlabsKey});
+  this.eventListener.connect({
+    donationalerts: this.donationalertsKey,
+    streamlabs: this.streamlabsKey
+  });
 
   this.topAmount = 0;
   if (this.items.length > 0) this.topAmount = this.items[0].amount;
   return {
-    settings: this.settings,
-    getSettings: () => {
-      return this.settings;
-    },
-    setSettings(bool) {
-      this.settings = bool;
-    },
+    page: this.page,
+    auctionDuration: this.auctionDuration,
+    auctionTimeout: this.auctionTimeout,
+    auctionTimeoutExtension: this.auctionTimeoutExtension,
     topAmount: this.topAmount,
     items: this.items,
     streamlabsKey: this.streamlabsKey,
     donationalertsKey: this.donationalertsKey,
     incomingTransaсtions: this.incomingTransaсtions,
+    getAuctionDuration: () => {
+      return this.auctionDuration;
+    },
+    getAuctionTimeout: () => {
+      return this.auctionTimeout;
+    },
+    getAuctionTimeoutExtension: () => {
+      return this.auctionTimeoutExtension;
+    },
+    saveTimerSettings: (
+      auctionDuration,
+      auctionTimeout,
+      auctionTimeoutExtension
+    ) => {
+      this.auctionDuration = parseInt(auctionDuration) || 1200;
+      this.auctionTimeout = parseInt(auctionTimeout) || 120;
+      this.auctionTimeoutExtension = parseInt(auctionTimeoutExtension) || 120;
+      localStorage.setItem("auctionDuration", this.auctionDuration);
+      localStorage.setItem("auctionTimeout", this.auctionTimeout);
+      localStorage.setItem(
+        "auctionTimeoutExtension",
+        this.auctionTimeoutExtension
+      );
+    },
+
+    goToApp: () => {
+      this.page = "app";
+    },
+    goToSettings: () => {
+      this.page = "settings";
+    },
+    goToTimerSettings: () => {
+      this.page = "timerSettings";
+    },
     getTopAmount: () => {
       return this.topAmount;
     },
@@ -132,9 +196,9 @@ var data = function() {
       return this.streamlabsKey;
     },
     setStreamlabsKey: streamlabsKey => {
-      this.setStreamlabsKey = streamlabsKey;
+      this.streamlabsKey = streamlabsKey;
       localStorage.setItem("streamlabsKey", streamlabsKey);
-      this.eventListener.connect({streamlabs: streamlabsKey});
+      this.eventListener.connect({ streamlabs: streamlabsKey });
     },
     getDonationalertsKey: () => {
       return this.donationalertsKey;
@@ -142,8 +206,7 @@ var data = function() {
     setDonationalertsKey: donationalertsKey => {
       this.donationalertsKey = donationalertsKey;
       localStorage.setItem("donationalertsKey", donationalertsKey);
-      this.eventListener.connect({donationalerts: donationalertsKey});
-
+      this.eventListener.connect({ donationalerts: donationalertsKey });
     }
   };
 };
@@ -153,7 +216,7 @@ var data = function() {
 export default {
   data: data,
   name: "App",
-  components: { AuctionItem, IncomingTransaction, Settings }
+  components: { AuctionItem, IncomingTransaction, Settings, TimerSettings }
 };
 </script>
 
@@ -171,7 +234,8 @@ export default {
   color: #2c3e50;
   margin: 0;
 }
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
@@ -183,7 +247,7 @@ html, body {
   flex-direction: row;
   justify-content: space-between;
 }
-.auction-app__header-text{
+.auction-app__header-text {
   font-size: 2rem;
   font-weight: bolder;
   line-height: 2rem;

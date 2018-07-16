@@ -6,7 +6,7 @@
     </div>
     <div class="incoming-transaction__body"> {{ incomingTransaction.body }} </div>
     <div class="incoming-transaction__button" v-for="(item,index) in getItems()"  :key="index">
-      <button @click="addMoneyToItem(item.name,incomingTransaction)" type=button>Add to {{ item.name }}</button>
+      <button @click="addMoneyToItem(item.name,incomingTransaction)" type=button>Засчитать как "{{ item.name }}"</button>
     </div>
     <textarea v-model="customItem" placeholder="Другой вариант"></textarea>
     <button @click="addMoneyToItem(customItem,incomingTransaction)" type=button>Другой вариант</button>
