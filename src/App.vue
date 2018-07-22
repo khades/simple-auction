@@ -3,17 +3,20 @@
     <div v-if="page === 'timerSettings'" id="app" class="auction-app">
          <div class="auction-app__header">
       <div class="auction-app__header-text">Аукцион</div>
+      <Timer :getCurrentAuctionStart=getCurrentAuctionStart :getCurrentAuctionDuration=getCurrentAuctionDuration />
       <div class="auction-app__buttons">
         <button type=button @click=goToApp>Назад</button>
       </div>
     </div>
     <div class="auction-app__body">
-      <TimerSettings :getAuctionDuration=getAuctionDuration :getAuctionTimeout=getAuctionTimeout :getAuctionTimeoutExtension=getAuctionTimeoutExtension :saveTimerSettings=saveTimerSettings />
+      <TimerSettings :getAuctionExtension=getAuctionExtension :getAuctionDuration=getAuctionDuration :getAuctionTimeout=getAuctionTimeout :getAuctionWinnerChangeExtension=getAuctionWinnerChangeExtension :saveTimerSettings=saveTimerSettings />
     </div>
   </div>
   <div v-if="page === 'settings'" id="app" class="auction-app">
     <div class="auction-app__header">
       <div class="auction-app__header-text">Аукцион</div>
+      <Timer :getCurrentAuctionStart=getCurrentAuctionStart :getCurrentAuctionDuration=getCurrentAuctionDuration />
+
       <div class="auction-app__buttons">
         <button type=button @click=goToApp>Назад</button>
       </div>
@@ -26,6 +29,8 @@
   <div v-if="page === 'app'"  id="app" class="auction-app">
     <div class="auction-app__header">
       <div class="auction-app__header-text">Аукцион</div>
+      <Timer :getCurrentAuctionStart=getCurrentAuctionStart :getCurrentAuctionDuration=getCurrentAuctionDuration />
+
       <div class="auction-app__buttons">
         <button type=button @click=goToTimerSettings>Настроить таймер</button>
         <button type=button @click=goToSettings>Настроить системы донатов</button>
@@ -53,6 +58,7 @@ import AuctionItem from "./components/AuctionItem";
 import IncomingTransaction from "./components/IncomingTransaction";
 import Settings from "./components/Settings";
 import TimerSettings from "./components/TimerSettings";
+import Timer from "./components/Timer";
 
 import DonationEvents from "./DonationEvents";
 
@@ -61,9 +67,15 @@ var data = function() {
     parseInt(localStorage.getItem("auctionDuration")) || 1200;
   this.auctionTimeout =
     parseInt(localStorage.getItem("auctionDurationTimeout")) || 120;
-  this.auctionTimeoutExtension =
+  this.auctionWinnerChangeExtension =
     parseInt(localStorage.getItem("auctionDurationTimeoutExtension")) || 120;
-
+  this.auctionExtension =
+    parseInt(localStorage.getItem("auctionExtension")) || 0;
+  this.currentAuctionDuration =
+    parseInt(localStorage.getItem("currentAuctionDuration")) || 1200;
+  this.currentAuctionStart =
+    parseInt(localStorage.getItem("currentAuctionStart")) ||
+    new Date().getTime();
   this.streamlabsKey = localStorage.getItem("streamlabsKey");
   this.donationalertsKey = localStorage.getItem("donationalertsKey");
   this.page = "app";
@@ -106,7 +118,7 @@ var data = function() {
     page: this.page,
     auctionDuration: this.auctionDuration,
     auctionTimeout: this.auctionTimeout,
-    auctionTimeoutExtension: this.auctionTimeoutExtension,
+    auctionWinnerChangeExtension: this.auctionWinnerChangeExtension,
     topAmount: this.topAmount,
     items: this.items,
     streamlabsKey: this.streamlabsKey,
@@ -118,23 +130,36 @@ var data = function() {
     getAuctionTimeout: () => {
       return this.auctionTimeout;
     },
-    getAuctionTimeoutExtension: () => {
-      return this.auctionTimeoutExtension;
+    getCurrentAuctionDuration: () => {
+      return this.currentAuctionDuration;
+    },
+    getAuctionExtension: () => {
+      return this.auctionExtension;
+    },
+    getCurrentAuctionStart: () => {
+      return this.currentAuctionStart;
+    },
+    getAuctionWinnerChangeExtension: () => {
+      return this.auctionWinnerChangeExtension;
     },
     saveTimerSettings: (
       auctionDuration,
       auctionTimeout,
-      auctionTimeoutExtension
+      auctionWinnerChangeExtension,
+      auctionExtension
     ) => {
       this.auctionDuration = parseInt(auctionDuration) || 1200;
       this.auctionTimeout = parseInt(auctionTimeout) || 120;
-      this.auctionTimeoutExtension = parseInt(auctionTimeoutExtension) || 120;
+      this.auctionWinnerChangeExtension = parseInt(auctionWinnerChangeExtension) || 120;
+      this.auctionExtension = parseInt(auctionExtension) || 120;
       localStorage.setItem("auctionDuration", this.auctionDuration);
       localStorage.setItem("auctionTimeout", this.auctionTimeout);
+
       localStorage.setItem(
-        "auctionTimeoutExtension",
-        this.auctionTimeoutExtension
+        "auctionWinnerChangeExtension",
+        this.auctionWinnerChangeExtension
       );
+      localStorage.setItem("auctionExtension", this.auctionExtension);
     },
 
     goToApp: () => {
@@ -153,6 +178,10 @@ var data = function() {
       return this.items;
     },
     addMoneyToItem: (itemName, incomingTransaction) => {
+      var topItem= ""
+      if (this.items.length > 0) {
+        topItem = this.items[0].name
+      }
       var itemFound = this.items.some((item, index) => {
         if (itemName !== item.name) return false;
         this.items[index].amount =
@@ -168,6 +197,14 @@ var data = function() {
       this.incomingTransaсtions = this.incomingTransaсtions.filter(
         item => item !== incomingTransaction
       );
+      if (new Date().getTime() > this.currentAuctionStart +this.currentAuctionDuration* 1000 - this.auctionTimeout * 1000) {
+        this.currentAuctionDuration = this.currentAuctionDuration + this.auctionExtension
+        if (topItem != this.items[0].name) {
+          this.currentAuctionDuration = this.currentAuctionDuration + this.auctionWinnerChangeExtension
+        }
+        localStorage.setItem("currentAuctionDuration", this.auctionDuration);
+
+      }
       localStorage.setItem(
         "incomingTransaсtions",
         JSON.stringify(this.incomingTransaсtions)
@@ -179,6 +216,14 @@ var data = function() {
     fullReset: () => {
       this.items = [];
       this.incomingTransaсtions = [];
+
+      this.currentAuctionDuration = this.auctionDuration;
+      localStorage.setItem("currentAuctionDuration", this.auctionDuration);
+
+      this.currentAuctionStart = new Date().getTime();
+      console.log(this.currentAuctionStart)
+      localStorage.setItem("currentAuctionStart", this.currentAuctionStart);
+
       localStorage.setItem("items", JSON.stringify(this.items));
       localStorage.setItem(
         "incomingTransaсtions",
@@ -211,12 +256,10 @@ var data = function() {
   };
 };
 
-// import HelloWorld from "./components/HelloWorld"
-
 export default {
   data: data,
   name: "App",
-  components: { AuctionItem, IncomingTransaction, Settings, TimerSettings }
+  components: { AuctionItem, IncomingTransaction, Settings, TimerSettings, Timer }
 };
 </script>
 
@@ -247,7 +290,7 @@ body {
   flex-direction: row;
   justify-content: space-between;
 }
-.auction-app__header-text {
+.auction-app__header-text, .timer {
   font-size: 2rem;
   font-weight: bolder;
   line-height: 2rem;

@@ -2,11 +2,13 @@
   <div class="timer-settings">
       <label for="auctionDuration">Длительность аукциона</label>
       <input type="number" v-model.number="auctionDuration" id="auctionDuration"/>
-      <label for="auctionTimeout">ХЗ как назвать</label>
+      <label for="auctionTimeout">Длительность специального времени чата, когда зачитываются нижеуказанные опции</label>
       <input type="number" v-model.number="auctionTimeout" id="auctionTimeout" />
-      <label for="auctionTimeoutExtension">Насколько секунд продлять аукцион, если какойто вариант вырывается на первое место</label>
-      <input type="number" v-model.number="auctionTimeoutExtension" id="auctionTimeoutExtension" />
-      <button type=button @click="saveTimerSettings(auctionDuration, auctionTimeout, auctionTimeoutExtenson)">Сохранить</button>
+      <label for="auctionWinnerChangeExtension">Насколько секунд продлять аукцион, если какойто вариант вырывается на первое место</label>
+      <input type="number" v-model.number="auctionWinnerChangeExtension" id="auctionWinnerChangeExtension" />
+      <label for="auctionExtension">Насколько секунд продлять аукцион, если пришёл донат</label>
+      <input type="number" v-model.number="auctionExtension" id="auctionExtension" />
+      <button type=button @click="saveTimerSettings(auctionDuration, auctionTimeout, auctionWinnerChangeExtension, auctionExtension)">Сохранить</button>
   </div>
 </template>
 
@@ -16,40 +18,43 @@ export default {
   props: [
     "getAuctionDuration",
     "getAuctionTimeout",
-    "getAuctionTimeoutExtension",
+    "getAuctionWinnerChangeExtension",
+    "getAuctionExtension",
+
     "saveTimerSettings"
   ],
   data: function() {
     return {
       auctionDuration: this.getAuctionDuration(),
       auctionTimeout: this.getAuctionTimeout(),
-      auctionTimeoutExtension: this.getAuctionTimeoutExtension()
+      auctionWinnerChangeExtension: this.getAuctionWinnerChangeExtension(),
+      auctionExtension: this.getAuctionExtension()
     };
   }
 };
 </script>
 <style scoped>
-.timer-settings{
-    display:flex;
-    flex-direction: column;
-    width: 100%;
-    text-align: left;
+.timer-settings {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
 }
 .timer-settings > input {
-    font-size: 1.1rem;
-    padding: 0.3rem;
+  font-size: 1.1rem;
+  padding: 0.3rem;
 }
 .timer-settings > button + * {
-    margin-top: 1rem;
-}
-.timer-settings > button  {
-    margin-top: 1rem;
-}
-.timer-settings >* {
-    width: 100%;
-    margin-bottom:1rem;
+  margin-top: 1rem;
 }
 .timer-settings > button {
-    font-size: 1.1rem;
+  margin-top: 1rem;
+}
+.timer-settings > * {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+.timer-settings > button {
+  font-size: 1.1rem;
 }
 </style>
