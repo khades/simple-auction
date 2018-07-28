@@ -93,7 +93,7 @@ var data = function() {
   }
   this.eventListener.addDonationListener(
     function(service, id, amount, name, text) {
-      var parsedAmount = parseFloat(amount)
+      var parsedAmount = Math.floor(parseFloat(amount))
       console.log(parsedAmount);
       this.incomingTransaсtions.push({
         id: service + " " + name + amount + new Date().getTime(),
