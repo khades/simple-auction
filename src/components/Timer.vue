@@ -18,7 +18,7 @@ export default {
       function() {
         this.timer = this.getTimer();
       }.bind(this),
-      1000
+      300
     );
   },
   methods: {

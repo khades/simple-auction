@@ -9,7 +9,7 @@
       </div>
     </div>
     <div class="auction-app__body">
-      <TimerSettings :getAuctionExtension=getAuctionExtension :getAuctionDuration=getAuctionDuration :getAuctionTimeout=getAuctionTimeout :getAuctionWinnerChangeExtension=getAuctionWinnerChangeExtension :saveTimerSettings=saveTimerSettings />
+      <TimerSettings :getRestrictDuration=getRestrictDuration :getAuctionExtension=getAuctionExtension :getAuctionDuration=getAuctionDuration :getAuctionTimeout=getAuctionTimeout :getAuctionWinnerChangeExtension=getAuctionWinnerChangeExtension :saveTimerSettings=saveTimerSettings />
     </div>
   </div>
   <div v-if="page === 'settings'" id="app" class="auction-app">
@@ -76,6 +76,7 @@ var data = function() {
   this.currentAuctionStart =
     parseInt(localStorage.getItem("currentAuctionStart")) ||
     new Date().getTime();
+  this.restrictDuration = localStorage.getItem("restrictDuration") == "true";
   this.streamlabsKey = localStorage.getItem("streamlabsKey");
   this.donationalertsKey = localStorage.getItem("donationalertsKey");
   this.page = "app";
@@ -93,7 +94,7 @@ var data = function() {
   this.eventListener.addDonationListener(
     function(service, id, amount, name, text) {
       this.incomingTransaсtions.push({
-        id: service + " " + id,
+        id: service + " " + name + amount + new Date().getTime(),
         user: name,
         body: text,
         amount: amount,
@@ -118,12 +119,16 @@ var data = function() {
     page: this.page,
     auctionDuration: this.auctionDuration,
     auctionTimeout: this.auctionTimeout,
+    restrictDuration: this.restrictDuration,
     auctionWinnerChangeExtension: this.auctionWinnerChangeExtension,
     topAmount: this.topAmount,
     items: this.items,
     streamlabsKey: this.streamlabsKey,
     donationalertsKey: this.donationalertsKey,
     incomingTransaсtions: this.incomingTransaсtions,
+    getRestrictDuration: () => {
+      return this.restrictDuration;
+    },
     getAuctionDuration: () => {
       return this.auctionDuration;
     },
@@ -146,12 +151,15 @@ var data = function() {
       auctionDuration,
       auctionTimeout,
       auctionWinnerChangeExtension,
-      auctionExtension
+      auctionExtension,
+      restrictDuration
     ) => {
       this.auctionDuration = parseInt(auctionDuration) || 1200;
       this.auctionTimeout = parseInt(auctionTimeout) || 120;
-      this.auctionWinnerChangeExtension = parseInt(auctionWinnerChangeExtension) || 120;
+      this.auctionWinnerChangeExtension =
+        parseInt(auctionWinnerChangeExtension) || 120;
       this.auctionExtension = parseInt(auctionExtension) || 120;
+      this.restrictDuration = restrictDuration;
       localStorage.setItem("auctionDuration", this.auctionDuration);
       localStorage.setItem("auctionTimeout", this.auctionTimeout);
 
@@ -160,6 +168,7 @@ var data = function() {
         this.auctionWinnerChangeExtension
       );
       localStorage.setItem("auctionExtension", this.auctionExtension);
+      localStorage.setItem("restrictDuration", this.restrictDuration);
     },
 
     goToApp: () => {
@@ -178,9 +187,9 @@ var data = function() {
       return this.items;
     },
     addMoneyToItem: (itemName, incomingTransaction) => {
-      var topItem= ""
+      var topItem = "";
       if (this.items.length > 0) {
-        topItem = this.items[0].name
+        topItem = this.items[0].name;
       }
       var itemFound = this.items.some((item, index) => {
         if (itemName !== item.name) return false;
@@ -197,13 +206,41 @@ var data = function() {
       this.incomingTransaсtions = this.incomingTransaсtions.filter(
         item => item !== incomingTransaction
       );
-      if (new Date().getTime() > this.currentAuctionStart +this.currentAuctionDuration* 1000 - this.auctionTimeout * 1000) {
-        this.currentAuctionDuration = this.currentAuctionDuration + this.auctionExtension
+      var currentAuctionExpiration =
+        this.currentAuctionStart +
+        this.currentAuctionDuration * 1000 -
+        new Date().getTime();
+      console.log(currentAuctionExpiration);
+      if (currentAuctionExpiration < this.auctionTimeout * 1000) {
+        this.currentAuctionDuration =
+          this.currentAuctionDuration + this.auctionExtension;
         if (topItem != this.items[0].name) {
-          this.currentAuctionDuration = this.currentAuctionDuration + this.auctionWinnerChangeExtension
+          this.currentAuctionDuration =
+            this.currentAuctionDuration + this.auctionWinnerChangeExtension;
         }
-        localStorage.setItem("currentAuctionDuration", this.auctionDuration);
 
+        if (this.restrictDuration === true) {
+          var recalculatedCurrentAuctionExpiration =
+            this.currentAuctionStart +
+            this.currentAuctionDuration * 1000 -
+            new Date().getTime();
+          if (
+            recalculatedCurrentAuctionExpiration >
+            this.auctionDuration * 1000
+          ) {
+            this.currentAuctionDuration = this.auctionDuration;
+            this.currentAuctionStart = new Date().getTime();
+            console.log(this.currentAuctionStart);
+            localStorage.setItem(
+              "currentAuctionStart",
+              this.currentAuctionStart
+            );
+          }
+        }
+        localStorage.setItem(
+          "currentAuctionDuration",
+          this.currentAuctionDuration
+        );
       }
       localStorage.setItem(
         "incomingTransaсtions",
@@ -221,7 +258,7 @@ var data = function() {
       localStorage.setItem("currentAuctionDuration", this.auctionDuration);
 
       this.currentAuctionStart = new Date().getTime();
-      console.log(this.currentAuctionStart)
+      console.log(this.currentAuctionStart);
       localStorage.setItem("currentAuctionStart", this.currentAuctionStart);
 
       localStorage.setItem("items", JSON.stringify(this.items));
@@ -259,7 +296,13 @@ var data = function() {
 export default {
   data: data,
   name: "App",
-  components: { AuctionItem, IncomingTransaction, Settings, TimerSettings, Timer }
+  components: {
+    AuctionItem,
+    IncomingTransaction,
+    Settings,
+    TimerSettings,
+    Timer
+  }
 };
 </script>
 
@@ -290,7 +333,8 @@ body {
   flex-direction: row;
   justify-content: space-between;
 }
-.auction-app__header-text, .timer {
+.auction-app__header-text,
+.timer {
   font-size: 2rem;
   font-weight: bolder;
   line-height: 2rem;
