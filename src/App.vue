@@ -93,11 +93,13 @@ var data = function() {
   }
   this.eventListener.addDonationListener(
     function(service, id, amount, name, text) {
+      var parsedAmount = parseFloat(amount)
+      console.log(parsedAmount);
       this.incomingTransaсtions.push({
         id: service + " " + name + amount + new Date().getTime(),
         user: name,
         body: text,
-        amount: amount,
+        amount: parsedAmount,
         date: new Date().getTime()
       });
       this.incomingTransaсtions.sort((lItem, rItem) => rItem - lItem);
