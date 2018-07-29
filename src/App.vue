@@ -44,8 +44,8 @@
         </div>
       </div>
       <div class="incoming-transactions">
-        <div v-for="(incomingTransaction) in getincomingTransaсtions()"  :key="incomingTransaction.id">
-          <IncomingTransaction :incomingTransaction=incomingTransaction :addMoneyToItem=addMoneyToItem :getItems=getItems />
+        <div v-for="(incomingTransaction) in getincomingTransactions()"  :key="incomingTransaction.id" >
+          <IncomingTransaction :incomingTransaction=incomingTransaction :addMoneyToItem=addMoneyToItem :getItems=getItems :dropItem=dropItem />
         </div>
       </div>
     </div>
@@ -59,6 +59,7 @@ import IncomingTransaction from "./components/IncomingTransaction";
 import Settings from "./components/Settings";
 import TimerSettings from "./components/TimerSettings";
 import Timer from "./components/Timer";
+import sha512 from "js-sha512";
 
 import DonationEvents from "./DonationEvents";
 
@@ -81,10 +82,10 @@ var data = function() {
   this.donationalertsKey = localStorage.getItem("donationalertsKey");
   this.page = "app";
   this.eventListener = new DonationEvents();
-  this.incomingTransaсtions = [];
-  var incT = JSON.parse(localStorage.getItem("incomingTransaсtions"));
+  this.incomingTransactions = [];
+  var incT = JSON.parse(localStorage.getItem("incomingTransactions"));
   if (Array.isArray(incT)) {
-    this.incomingTransaсtions = incT.sort((lItem, rItem) => rItem - lItem);
+    this.incomingTransactions = incT.sort((lItem, rItem) => rItem - lItem);
   }
   this.items = [];
   var itemT = JSON.parse(localStorage.getItem("items"));
@@ -93,19 +94,18 @@ var data = function() {
   }
   this.eventListener.addDonationListener(
     function(service, id, amount, name, text) {
-      var parsedAmount = Math.floor(parseFloat(amount))
-      console.log(parsedAmount);
-      this.incomingTransaсtions.push({
-        id: service + " " + name + amount + new Date().getTime(),
+      var parsedAmount = Math.floor(parseFloat(amount));
+      this.incomingTransactions.push({
+        id: sha512(service + " " + name + amount + new Date().getTime()),
         user: name,
         body: text,
         amount: parsedAmount,
         date: new Date().getTime()
       });
-      this.incomingTransaсtions.sort((lItem, rItem) => rItem - lItem);
+      this.incomingTransactions.sort((lItem, rItem) => rItem - lItem);
       localStorage.setItem(
-        "incomingTransaсtions",
-        JSON.stringify(this.incomingTransaсtions)
+        "incomingTransactions",
+        JSON.stringify(this.incomingTransactions)
       );
     }.bind(this)
   );
@@ -127,7 +127,7 @@ var data = function() {
     items: this.items,
     streamlabsKey: this.streamlabsKey,
     donationalertsKey: this.donationalertsKey,
-    incomingTransaсtions: this.incomingTransaсtions,
+    incomingTransactions: this.incomingTransactions,
     getRestrictDuration: () => {
       return this.restrictDuration;
     },
@@ -188,6 +188,16 @@ var data = function() {
     getItems: () => {
       return this.items;
     },
+    dropItem: incomingTransaction => {
+      incomingTransaction;
+      this.incomingTransactions = this.incomingTransactions.filter(
+        item => item !== incomingTransaction
+      );
+      localStorage.setItem(
+        "incomingTransactions",
+        JSON.stringify(this.incomingTransactions)
+      );
+    },
     addMoneyToItem: (itemName, incomingTransaction) => {
       var topItem = "";
       if (this.items.length > 0) {
@@ -205,14 +215,13 @@ var data = function() {
       this.items.sort((lItem, rItem) => rItem.amount - lItem.amount);
       if (this.items.length > 0) this.topAmount = this.items[0].amount;
       localStorage.setItem("items", JSON.stringify(this.items));
-      this.incomingTransaсtions = this.incomingTransaсtions.filter(
+      this.incomingTransactions = this.incomingTransactions.filter(
         item => item !== incomingTransaction
       );
       var currentAuctionExpiration =
         this.currentAuctionStart +
         this.currentAuctionDuration * 1000 -
         new Date().getTime();
-      console.log(currentAuctionExpiration);
       if (currentAuctionExpiration < this.auctionTimeout * 1000) {
         this.currentAuctionDuration =
           this.currentAuctionDuration + this.auctionExtension;
@@ -232,7 +241,6 @@ var data = function() {
           ) {
             this.currentAuctionDuration = this.auctionDuration;
             this.currentAuctionStart = new Date().getTime();
-            console.log(this.currentAuctionStart);
             localStorage.setItem(
               "currentAuctionStart",
               this.currentAuctionStart
@@ -245,35 +253,34 @@ var data = function() {
         );
       }
       localStorage.setItem(
-        "incomingTransaсtions",
-        JSON.stringify(this.incomingTransaсtions)
+        "incomingTransactions",
+        JSON.stringify(this.incomingTransactions)
       );
     },
-    getincomingTransaсtions: () => {
-      return this.incomingTransaсtions;
+    getincomingTransactions: () => {
+      return this.incomingTransactions;
     },
     fullReset: () => {
       this.items = [];
-      this.incomingTransaсtions = [];
+      this.incomingTransactions = [];
 
       this.currentAuctionDuration = this.auctionDuration;
       localStorage.setItem("currentAuctionDuration", this.auctionDuration);
 
       this.currentAuctionStart = new Date().getTime();
-      console.log(this.currentAuctionStart);
       localStorage.setItem("currentAuctionStart", this.currentAuctionStart);
 
       localStorage.setItem("items", JSON.stringify(this.items));
       localStorage.setItem(
-        "incomingTransaсtions",
-        JSON.stringify(this.incomingTransaсtions)
+        "incomingTransactions",
+        JSON.stringify(this.incomingTransactions)
       );
     },
     addIncomingTransatiions: item => {
-      this.incomingTransaсtions.push(item);
+      this.incomingTransactions.push(item);
       localStorage.setItem(
-        "incomingTransaсtions",
-        JSON.stringify(this.incomingTransaсtions)
+        "incomingTransactions",
+        JSON.stringify(this.incomingTransactions)
       );
     },
     getStreamlabsKey: () => {
